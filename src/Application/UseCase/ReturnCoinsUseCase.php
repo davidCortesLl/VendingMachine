@@ -10,8 +10,18 @@ class ReturnCoinsUseCase {
     public function __construct(
         public VendingMachineRepository $repository) {
     }
-    public function execute() {
-        // TODO: return coins logic
+
+    public function execute(): array {
+        try {
+            $machine = $this->repository->get();
+            $coins = $machine->returnInsertedCoins();
+            $this->repository->save($machine);
+            $result = array_map(fn($coin) => ['value' => $coin->value, 'count' => $coin->count], $coins);
+
+            return $result;
+        } catch (\Exception $e) {
+            throw new \Exception("Error returning coins: " . $e->getMessage());
+        }
     }
 }
 
