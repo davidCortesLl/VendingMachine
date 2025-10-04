@@ -6,5 +6,8 @@
       "Infrastructure\\": "src/Infrastructure/"
     }
   },
-  "require": {}
+  "require-dev": {
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^12.4"
+  }
 }

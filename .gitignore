@@ -1,1 +1,12 @@
-.idea/
+# Composer dependencies
+/vendor/
+
+# PHPUnit y cobertura
+/coverage/
+/coverage.xml
+/phpunit.result.cache
+
+# Archivos temporales y logs
+*.log
+/tests/_tmp/
+*.tmp
