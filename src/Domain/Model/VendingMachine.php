@@ -19,7 +19,13 @@ class VendingMachine {
         float $insertedMoney = 0.0
     ) {
         $this->items = $items;
-        $this->coins = $coins;
+        // Normalise coin keys to 2 decimals
+        $normalizedCoins = [];
+        foreach ($coins as $k => $v) {
+            $key = number_format((float)$k, 2, '.', '');
+            $normalizedCoins[$key] = $v;
+        }
+        $this->coins = $normalizedCoins;
         $this->insertedMoney = $insertedMoney;
     }
 
@@ -61,14 +67,15 @@ class VendingMachine {
         usort($coinValues, fn($a, $b) => (float)$b <=> (float)$a);
         $coinsBackup = $this->coins;
         foreach ($coinValues as $value) {
-            $coinValue = (float)$value;
+            $coinKey = number_format((float)$value, 2, '.', '');
+            $coinValue = (float)$coinKey;
             if ($amount < 0.00001) break;
-            $available = $this->coins[$value];
+            $available = $this->coins[$coinKey] ?? 0;
             $needed = (int) floor(round($amount + 0.00001, 2) / $coinValue);
             $take = min($needed, $available);
             if ($take > 0) {
                 $change[] = ['value' => $coinValue, 'count' => $take];
-                $this->coins[$value] -= $take;
+                $this->coins[$coinKey] -= $take;
                 $amount -= $coinValue * $take;
                 $amount = round($amount, 2);
             }

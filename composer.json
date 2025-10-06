@@ -3,11 +3,17 @@
     "psr-4": {
       "Domain\\": "src/Domain/",
       "Application\\": "src/Application/",
-      "Infrastructure\\": "src/Infrastructure/"
+      "Infrastructure\\": "src/Infrastructure/",
+      "Api\\": "src/Api/"
     }
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^12.4"
+  },
+  "require": {
+    "slim/slim": "^4.15",
+    "slim/psr7": "^1.7",
+    "php-di/php-di": "^7.1"
   }
 }

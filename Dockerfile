@@ -7,4 +7,4 @@ RUN php composer.phar install || true
 RUN pecl install redis && docker-php-ext-enable redis
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 RUN php composer.phar dump-autoload
-CMD ["php", "-S", "0.0.0.0:8080", "src/Api/index.php"]
+CMD ["php", "-S", "0.0.0.0:8080", "public/index.php"]
