@@ -10,3 +10,5 @@
 *.log
 /tests/_tmp/
 *.tmp
+
+VendingMachine.iml
