@@ -80,7 +80,7 @@ This API simulates the operation of a vending machine. It allows you to insert c
 
 1. **Start the services:**
    ```sh
-   make docker-up
+   make up
    ```
 2. **Run the tests:**
    ```sh
@@ -100,7 +100,7 @@ This API simulates the operation of a vending machine. It allows you to insert c
    ```
 6. **Stop and clean up the services:**
    ```sh
-   make docker-down
+   make down
    ```
 
 The API will be available on the port configured in `docker-compose.yml` (by default, usually 80 or 8080). You can test the endpoints using tools like Postman or curl.
