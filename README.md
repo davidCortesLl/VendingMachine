@@ -4,6 +4,13 @@
 
 This API simulates the operation of a vending machine. It allows you to insert coins, select products, return inserted money, and configure the inventory and available coins. Persistence can be in-memory or Redis, and it is ready to be easily run in a Docker environment.
 
+## Requirements
+
+- PHP >= 8.3
+- Composer
+- Docker & Docker Compose
+- Make (optional, for automation commands)
+
 ## API Endpoints
 
 ### 1. Insert Coin

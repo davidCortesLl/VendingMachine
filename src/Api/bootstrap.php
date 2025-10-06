@@ -28,6 +28,7 @@ function getVendingMachineRepository(): VendingMachineRepository {
     $defaultMachine = getDefaultMachineState();
     $persistence = new RedisVendingMachinePersistence('redis', 6379, 'vending_machine');
     $machine = $persistence->load($defaultMachine);
+
     return new InMemoryVendingMachineRepository($machine);
 }
 

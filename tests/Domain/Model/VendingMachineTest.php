@@ -23,33 +23,35 @@ class VendingMachineTest extends TestCase
     {
         $items = [$this->makeItem('A1', 'Water', 1.0, 2)];
         $coins = [$this->makeCoin(0.25, 5)];
-        $inserted = [$this->makeCoin(1.0, 1)];
+        $inserted = 1.0;
         $vm = new VendingMachine($items, $coins, $inserted);
         $this->assertSame($items, $vm->items);
         $this->assertSame($coins, $vm->coins);
         $this->assertSame($inserted, $vm->insertedMoney);
     }
 
-    public function testInsertCoinAddsNewCoin(): void
+    public function testInsertCoinSumsInsertedMoneyAndAddsCoin(): void
     {
-        $vm = new VendingMachine([], [], []);
+        $vm = new VendingMachine([], [], 0.0);
         $vm->insertCoin(0.10);
-        $this->assertCount(1, $vm->insertedMoney);
-        $this->assertSame(0.10, $vm->insertedMoney[0]->value);
-        $this->assertSame(1, $vm->insertedMoney[0]->count);
+        $this->assertSame(0.10, $vm->insertedMoney);
+        $this->assertCount(1, $vm->coins);
+        $this->assertSame(0.10, $vm->coins[0]->value);
+        $this->assertSame(1, $vm->coins[0]->count);
     }
 
-    public function testInsertCoinIncrementsExisting(): void
+    public function testInsertCoinIncrementsExistingCoin(): void
     {
-        $vm = new VendingMachine([], [], [new Coin(0.25, 2)]);
+        $vm = new VendingMachine([], [new Coin(0.25, 2)], 0.0);
         $vm->insertCoin(0.25);
-        $this->assertCount(1, $vm->insertedMoney);
-        $this->assertSame(3, $vm->insertedMoney[0]->count);
+        $this->assertSame(0.25, $vm->insertedMoney);
+        $this->assertCount(1, $vm->coins);
+        $this->assertSame(3, $vm->coins[0]->count);
     }
 
     public function testAddCoinAddsNewCoin(): void
     {
-        $vm = new VendingMachine([], [], []);
+        $vm = new VendingMachine([], [], 0.0);
         $vm->addCoin(1.00);
         $this->assertCount(1, $vm->coins);
         $this->assertSame(1.00, $vm->coins[0]->value);
@@ -58,7 +60,7 @@ class VendingMachineTest extends TestCase
 
     public function testAddCoinIncrementsExisting(): void
     {
-        $vm = new VendingMachine([], [new Coin(0.05, 2)], []);
+        $vm = new VendingMachine([], [new Coin(0.05, 2)], 0.0);
         $vm->addCoin(0.05);
         $this->assertCount(1, $vm->coins);
         $this->assertSame(3, $vm->coins[0]->count);
@@ -66,23 +68,141 @@ class VendingMachineTest extends TestCase
 
     public function testIsInsertedMoneyEmptyTrue(): void
     {
-        $vm = new VendingMachine([], [], []);
+        $vm = new VendingMachine([], [], 0.0);
         $this->assertTrue($vm->isInsertedMoneyEmpty());
     }
 
     public function testIsInsertedMoneyEmptyFalse(): void
     {
-        $vm = new VendingMachine([], [], [new Coin(0.10, 1)]);
+        $vm = new VendingMachine([], [], 0.10);
         $this->assertFalse($vm->isInsertedMoneyEmpty());
     }
 
-    public function testReturnInsertedCoinsEmptiesInsertedMoney(): void
+    public function testReturnInsertedCoinsGreedy(): void
     {
-        $coins = [new Coin(0.25, 2), new Coin(1.00, 1)];
-        $vm = new VendingMachine([], [], $coins);
+        $coins = [new Coin(0.25, 2), new Coin(0.10, 1)];
+        $vm = new VendingMachine([], $coins, 0.60);
         $returned = $vm->returnInsertedCoins();
-        $this->assertEquals($coins, $returned);
-        $this->assertEmpty($vm->insertedMoney);
+        // Debe devolver 2x0.25 y 1x0.10
+        $this->assertCount(2, $returned);
+        $this->assertEquals(0.25, $returned[0]->value);
+        $this->assertEquals(2, $returned[0]->count);
+        $this->assertEquals(0.10, $returned[1]->value);
+        $this->assertEquals(1, $returned[1]->count);
+        $this->assertSame(0.0, $vm->insertedMoney);
+    }
+
+    public function testReturnInsertedCoinsNotEnoughChange(): void
+    {
+        $coins = [new Coin(0.25, 1), new Coin(0.10, 1)];
+        $vm = new VendingMachine([], $coins, 0.60);
+        $returned = $vm->returnInsertedCoins();
+        // No puede devolver 0.60 con solo 0.25+0.10
+        $this->assertSame([], $returned);
+        $this->assertSame(0.0, $vm->insertedMoney);
+    }
+
+    public function testSelectItemSuccess(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 0.5, 2);
+        $coins = [new Coin(0.5, 2), new Coin(0.25, 2)];
+        $vm = new VendingMachine([$item], $coins, 0.5);
+        $result = $vm->selectItem('A1');
+        $this->assertEquals('Water', $result['item']['name']);
+        $this->assertEquals([], $result['change']);
+        $this->assertSame(1, $result['status']['items'][0]->count);
+        $this->assertSame(0.0, $result['status']['insertedMoney']);
+    }
+
+    public function testSelectItemWithChange(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 0.5, 2);
+        $coins = [new Coin(0.5, 2), new Coin(0.25, 2)];
+        $vm = new VendingMachine([$item], $coins, 1.0);
+        $result = $vm->selectItem('A1');
+        $this->assertEquals('Water', $result['item']['name']);
+        $this->assertNotEmpty($result['change']);
+        $this->assertSame(1, $result['status']['items'][0]->count);
+        $this->assertSame(0.0, $result['status']['insertedMoney']);
+    }
+
+    public function testSelectItemInsufficientFunds(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 1.0, 2);
+        $coins = [new Coin(0.5, 2)];
+        $vm = new VendingMachine([$item], $coins, 0.5);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Insufficient funds');
+        $vm->selectItem('A1');
+    }
+
+    public function testSelectItemOutOfStock(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 0.5, 0);
+        $coins = [new Coin(0.5, 2)];
+        $vm = new VendingMachine([$item], $coins, 0.5);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Item out of stock');
+        $vm->selectItem('A1');
+    }
+
+    public function testSelectItemNotFound(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 0.5, 2);
+        $coins = [new Coin(0.5, 2)];
+        $vm = new VendingMachine([$item], $coins, 0.5);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Item not found');
+        $vm->selectItem('B1');
+    }
+
+    public function testSelectItemCannotReturnExactChange(): void
+    {
+        $item = $this->makeItem('A1', 'Water', 0.5, 2);
+        $coins = [new Coin(0.25, 1)];
+        $vm = new VendingMachine([$item], $coins, 1.0);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Cannot return exact change');
+        $vm->selectItem('A1');
+    }
+
+    public function testGetChangeFromCoinsExact(): void
+    {
+        $coins = [new Coin(0.5, 2), new Coin(0.25, 2)];
+        $vm = new VendingMachine([], $coins, 0.0);
+        $ref = new \ReflectionClass($vm);
+        $method = $ref->getMethod('getChangeFromCoins');
+        $method->setAccessible(true);
+        $result = $method->invoke($vm, 1.0);
+        $this->assertCount(1, $result); // Solo un tipo de moneda
+        $this->assertEquals(0.5, $result[0]->value);
+        $this->assertEquals(2, $result[0]->count);
+    }
+
+    public function testGetChangeFromCoinsNotEnough(): void
+    {
+        $coins = [new Coin(0.25, 1)];
+        $vm = new VendingMachine([], $coins, 0.0);
+        $ref = new \ReflectionClass($vm);
+        $method = $ref->getMethod('getChangeFromCoins');
+        $method->setAccessible(true);
+        $result = $method->invoke($vm, 0.5);
+        $this->assertSame([], $result);
+    }
+
+    public function testGetChangeFromCoinsGreedy(): void
+    {
+        $coins = [new Coin(1.0, 1), new Coin(0.5, 2), new Coin(0.2, 3), new Coin(0.1, 5)];
+        $vm = new VendingMachine([], $coins, 0.0);
+        $ref = new \ReflectionClass($vm);
+        $method = $ref->getMethod('getChangeFromCoins');
+        $method->setAccessible(true);
+        $result = $method->invoke($vm, 1.8);
+        $this->assertNotEmpty($result);
+        $total = 0.0;
+        foreach ($result as $coin) {
+            $total += $coin->value * $coin->count;
+        }
+        $this->assertEquals(1.8, $total);
     }
 }
-
