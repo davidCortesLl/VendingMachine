@@ -5,8 +5,6 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 use Application\UseCase\ServiceSetMachineUseCase;
 use Domain\Repository\VendingMachineRepository;
-use Domain\Model\Item;
-use Domain\Model\Coin;
 
 class ServiceSetMachineUseCaseTest extends TestCase
 {
@@ -14,7 +12,7 @@ class ServiceSetMachineUseCaseTest extends TestCase
     {
         $repo = $this->createMock(VendingMachineRepository::class);
         $repo->expects($this->once())->method('save');
-        $useCase = new ServiceSetMachineUseCase($repo);
+
         $items = [
             ['selector' => '1', 'name' => 'Water', 'price' => 1.0, 'count' => 5],
             ['selector' => '2', 'name' => 'Juice', 'price' => 1.5, 'count' => 3],
@@ -23,20 +21,24 @@ class ServiceSetMachineUseCaseTest extends TestCase
             ['value' => 0.25, 'count' => 10],
             ['value' => 1.0, 'count' => 5],
         ];
+        $useCase = new ServiceSetMachineUseCase($repo);
         $useCase->execute($items, $coins);
+
         $this->assertTrue(true);
     }
 
     public function testSetMachineInvalidItemThrows(): void
     {
         $repo = $this->createMock(VendingMachineRepository::class);
-        $useCase = new ServiceSetMachineUseCase($repo);
+
         $items = [
             ['selector' => '1', 'name' => '', 'price' => 1.0, 'count' => 5],
         ];
         $coins = [
             ['value' => 0.25, 'count' => 10],
         ];
+        $useCase = new ServiceSetMachineUseCase($repo);
+
         $this->expectException(Exception::class);
         $useCase->execute($items, $coins);
     }
@@ -44,13 +46,15 @@ class ServiceSetMachineUseCaseTest extends TestCase
     public function testSetMachineInvalidCoinThrows(): void
     {
         $repo = $this->createMock(VendingMachineRepository::class);
-        $useCase = new ServiceSetMachineUseCase($repo);
+
         $items = [
             ['selector' => '1', 'name' => 'Water', 'price' => 1.0, 'count' => 5],
         ];
         $coins = [
             ['value' => 0.03, 'count' => 10],
         ];
+        $useCase = new ServiceSetMachineUseCase($repo);
+
         $this->expectException(Exception::class);
         $useCase->execute($items, $coins);
     }
@@ -59,13 +63,15 @@ class ServiceSetMachineUseCaseTest extends TestCase
     {
         $repo = $this->createMock(VendingMachineRepository::class);
         $repo->method('save')->willThrowException(new Exception('Save error'));
-        $useCase = new ServiceSetMachineUseCase($repo);
+
         $items = [
             ['selector' => '1', 'name' => 'Water', 'price' => 1.0, 'count' => 5],
         ];
         $coins = [
             ['value' => 0.25, 'count' => 10],
         ];
+        $useCase = new ServiceSetMachineUseCase($repo);
+
         $this->expectException(Exception::class);
         $useCase->execute($items, $coins);
     }
@@ -74,8 +80,10 @@ class ServiceSetMachineUseCaseTest extends TestCase
     {
         $repo = $this->createMock(VendingMachineRepository::class);
         $repo->expects($this->once())->method('save');
+
         $useCase = new ServiceSetMachineUseCase($repo);
         $useCase->execute([], []);
+
         $this->assertTrue(true);
     }
 }

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Domain\Model;
 
 class VendingMachine {
+    public const VALID_COIN_VALUES = [0.05, 0.10, 0.25, 1.00];
+
     /** @var Item[] */
     public array $items;
-    /** @var Coin[] */
+    /** @var array<string, int> */
     public array $coins;
     public float $insertedMoney;
 
@@ -27,14 +29,12 @@ class VendingMachine {
     }
 
     public function addCoin(float $value): void {
-        foreach ($this->coins as $coin) {
-            if ($coin->value === $value) {
-                $coin->count++;
-                return;
-            }
+        $key = number_format($value, 2, '.', '');
+        if (isset($this->coins[$key])) {
+            $this->coins[$key]++;
+        } else {
+            $this->coins[$key] = 1;
         }
-
-        $this->coins[] = new Coin($value, 1);
     }
 
     public function isInsertedMoneyEmpty(): bool {
@@ -42,48 +42,41 @@ class VendingMachine {
     }
 
     /**
-     * @return Coin[]
+     * @return array<int, array{value: float, count: int}>
      */
     public function returnInsertedCoins(): array {
         $amount = $this->insertedMoney;
         $result = $this->getChangeFromCoins($amount);
         $this->insertedMoney = 0.0;
-
         return $result;
     }
 
     /**
-     * @return Coin[]
+     * @return array<int, array{value: float, count: int}>
      */
     private function getChangeFromCoins(float $amount): array {
         $change = [];
-        usort($this->coins, fn($a, $b) => $b->value <=> $a->value);
-
-        foreach ($this->coins as $coin) {
+        // Ordenar de mayor a menor valor
+        $coinValues = array_keys($this->coins);
+        usort($coinValues, fn($a, $b) => (float)$b <=> (float)$a);
+        $coinsBackup = $this->coins;
+        foreach ($coinValues as $value) {
+            $coinValue = (float)$value;
             if ($amount < 0.00001) break;
-            $needed = (int) floor(round($amount + 0.00001, 2) / $coin->value);
-            $take = min($needed, $coin->count);
+            $available = $this->coins[$value];
+            $needed = (int) floor(round($amount + 0.00001, 2) / $coinValue);
+            $take = min($needed, $available);
             if ($take > 0) {
-                $change[] = new Coin($coin->value, $take);
-                $coin->count -= $take;
-                $amount -= $coin->value * $take;
+                $change[] = ['value' => $coinValue, 'count' => $take];
+                $this->coins[$value] -= $take;
+                $amount -= $coinValue * $take;
                 $amount = round($amount, 2);
             }
         }
-
         if ($amount > 0.00001) {
-            // Can't retun change, restore coins
-            foreach ($change as $c) {
-                foreach ($this->coins as $coin) {
-                    if ($coin->value === $c->value) {
-                        $coin->count += $c->count;
-                    }
-                }
-            }
-
+            $this->coins = $coinsBackup;
             return [];
         }
-
         return $change;
     }
 
@@ -104,12 +97,10 @@ class VendingMachine {
         if ($item->count < 1) {
             throw new \Exception("Item out of stock");
         }
-
         $inserted = $this->insertedMoney;
         if ($inserted < $item->price) {
             throw new \Exception("Insufficient funds. Inserted: $inserted, Price: $item->price");
         }
-
         $change = round($inserted - $item->price, 2);
         $changeCoins = [];
         if ($change > 0.00001) {
@@ -118,17 +109,15 @@ class VendingMachine {
                 throw new \Exception("Cannot return exact change");
             }
         }
-
         $item->count--;
         $this->insertedMoney = 0.0;
-
         return [
             'item' => [
                 'selector' => $item->selector,
                 'name' => $item->name,
                 'price' => $item->price
             ],
-            'change' => array_map(fn($coin) => ['value' => $coin->value, 'count' => $coin->count], $changeCoins),
+            'change' => $changeCoins,
             'status' => [
                 'items' => $this->items,
                 'coins' => $this->coins,
@@ -136,4 +125,24 @@ class VendingMachine {
             ]
         ];
     }
+
+    public static function isValidCoinValue(float|string $value): bool {
+        $floatValue = (float)$value;
+        return in_array($floatValue, self::VALID_COIN_VALUES, true);
+    }
+
+    public static function validateCoinData(float|string $value, int $count): ?string {
+        $floatValue = (float)$value;
+        if ($floatValue < 0) {
+            return "Coin value cannot be negative";
+        }
+        if ($count < 0) {
+            return "Coin count cannot be negative";
+        }
+        if (!self::isValidCoinValue($floatValue)) {
+            return "Coin value '$floatValue' is not allowed";
+        }
+        return null;
+    }
+
 }

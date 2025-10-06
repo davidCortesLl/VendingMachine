@@ -7,21 +7,17 @@ use Application\UseCase\SelectItemUseCase;
 use Domain\Repository\VendingMachineRepository;
 use Domain\Model\VendingMachine;
 use Domain\Model\Item;
-use Domain\Model\Coin;
 
 class SelectItemUseCaseTest extends TestCase
 {
     private function makeItem(string $selector, string $name, float $price, int $count): Item {
         return new Item($selector, $name, $price, $count);
     }
-    private function makeCoin(float $value, int $count): Coin {
-        return new Coin($value, $count);
-    }
 
     public function testSelectItemSuccessExactFunds(): void
     {
         $item = $this->makeItem('1', 'Water', 1.0, 2);
-        $coins = [$this->makeCoin(0.5, 2)];
+        $coins = ['0.5' => 2];
         $machine = new VendingMachine([$item], $coins, 1.0);
 
         $repo = $this->createMock(VendingMachineRepository::class);
@@ -40,7 +36,7 @@ class SelectItemUseCaseTest extends TestCase
     public function testSelectItemSuccessWithChangeFromCoins(): void
     {
         $item = $this->makeItem('1', 'Juice', 1.0, 2);
-        $coins = [$this->makeCoin(0.5, 2), $this->makeCoin(0.25, 2)];
+        $coins = ['0.5' => 2, '0.25' => 2];
         $machine = new VendingMachine([$item], $coins, 1.5);
 
         $repo = $this->createMock(VendingMachineRepository::class);
@@ -59,7 +55,7 @@ class SelectItemUseCaseTest extends TestCase
     public function testSelectItemInsufficientFunds(): void
     {
         $item = $this->makeItem('1', 'Water', 1.0, 2);
-        $coins = [$this->makeCoin(0.5, 2)];
+        $coins = ['0.5' => 2];
         $machine = new VendingMachine([$item], $coins, 0.5);
 
         $repo = $this->createMock(VendingMachineRepository::class);
@@ -75,7 +71,7 @@ class SelectItemUseCaseTest extends TestCase
     public function testSelectItemCannotReturnExactChange(): void
     {
         $item = $this->makeItem('1', 'Juice', 1.0, 2);
-        $coins = [$this->makeCoin(0.25, 1)];
+        $coins = ['0.25' => 1];
         $machine = new VendingMachine([$item], $coins, 1.5);
 
         $repo = $this->createMock(VendingMachineRepository::class);

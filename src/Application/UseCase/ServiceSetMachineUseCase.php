@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Application\UseCase;
 
+use Domain\Model\VendingMachine;
 use Domain\Repository\VendingMachineRepository;
 use Domain\Model\Item;
-use Domain\Model\Coin;
 use Exception;
 
 class ServiceSetMachineUseCase {
@@ -15,8 +15,6 @@ class ServiceSetMachineUseCase {
     ) {}
 
     /**
-     * @param array $itemsData
-     * @param array $coinsData
      * @throws Exception
      */
     public function execute(array $itemsData, array $coinsData): void {
@@ -41,23 +39,17 @@ class ServiceSetMachineUseCase {
 
         $coins = [];
         foreach ($coinsData as $coin) {
-            $error = Coin::validateCoinData((float)$coin['value'], (int)$coin['count']);
+            $error = VendingMachine::validateCoinData((float)$coin['value'], (int)$coin['count']);
             if ($error !== null) {
                 throw new Exception($error);
             }
-
-            $coins[] = new Coin(
-                (float)$coin['value'],
-                (int)$coin['count']
-            );
+            $coins[(string)$coin['value']] = (int)$coin['count'];
         }
 
         $machine = $this->repository->get();
         $machine->items = $items;
         $machine->coins = $coins;
         $this->repository->save($machine);
-
-        return;
     }
 
 }

@@ -11,14 +11,16 @@ class ReturnCoinsUseCase {
         public VendingMachineRepository $repository) {
     }
 
+    /**
+     * @throws \Exception
+     */
     public function execute(): array {
         try {
             $machine = $this->repository->get();
             $coins = $machine->returnInsertedCoins();
             $this->repository->save($machine);
-            $result = array_map(fn($coin) => ['value' => $coin->value, 'count' => $coin->count], $coins);
 
-            return $result;
+            return $coins;
         } catch (\Exception $e) {
             throw new \Exception("Error returning coins: " . $e->getMessage());
         }

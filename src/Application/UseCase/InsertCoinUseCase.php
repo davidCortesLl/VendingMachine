@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Application\UseCase;
 
-use Domain\Model\Coin;
+use Domain\Model\VendingMachine;
 use Domain\Repository\VendingMachineRepository;
 use Exception;
 
@@ -17,10 +17,11 @@ class InsertCoinUseCase {
      * @throws Exception
      */
     public function execute(float $value): void {
-        $error = Coin::validateCoinData($value, 1);
+        $error = VendingMachine::validateCoinData($value, 1);
         if ($error !== null) {
             throw new \Exception($error);
         }
+
         try {
             $machine = $this->repository->get();
             $machine->insertCoin($value);

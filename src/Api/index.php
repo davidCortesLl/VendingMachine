@@ -48,7 +48,7 @@ if ($method === 'POST' && $uri === '/return-coin') {
     }
 
     http_response_code(200);
-    echo json_encode(['status' => $returnedCoins]);
+    echo json_encode(['returnedCoins' => $returnedCoins, 'status' => $repository->get()]);
 
     exit;
 }
