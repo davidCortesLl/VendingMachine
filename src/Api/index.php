@@ -10,7 +10,6 @@ use Application\UseCase\SelectItemUseCase;
 use Application\UseCase\ServiceSetMachineUseCase;
 
 $repository = getVendingMachineRepository();
-$persistence = getPersistence();
 
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
@@ -33,7 +32,6 @@ if ($method === 'POST' && $uri === '/insert-coin') {
         echo json_encode(['error' => $e->getMessage()]);
         exit;
     }
-    $persistence->save($repository->get());
     http_response_code(200);
     echo json_encode(['status' => $repository->get()]);
     exit;
@@ -42,7 +40,6 @@ if ($method === 'POST' && $uri === '/return-coin') {
     try {
         $useCase = new ReturnCoinsUseCase($repository);
         $returnedCoins = $useCase->execute();
-        $persistence->save($repository->get());
     } catch (Exception $e) {
         http_response_code(422);
         echo json_encode(['error' => $e->getMessage()]);
@@ -75,8 +72,6 @@ if ($method === 'POST' && $uri === '/select-item') {
 
         exit;
     }
-    $persistence->save($repository->get());
-
     http_response_code(200);
     echo json_encode($result);
 
@@ -102,8 +97,6 @@ if ($method === 'POST' && $uri === '/service/set-machine') {
         echo json_encode(['error' => $e->getMessage()]);
         exit;
     }
-
-    $persistence->save($repository->get());
 
     http_response_code(200);
     echo json_encode(['status' => $repository->get()]);

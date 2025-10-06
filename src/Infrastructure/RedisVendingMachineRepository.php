@@ -5,19 +5,22 @@ declare(strict_types=1);
 namespace Infrastructure;
 
 use Domain\Model\VendingMachine;
+use Domain\Repository\VendingMachineRepository;
 use Redis;
 
-class RedisVendingMachinePersistence {
+class RedisVendingMachineRepository implements VendingMachineRepository {
     private Redis $redis;
     private string $key;
+    private VendingMachine $default;
 
-    public function __construct(string $host = 'redis', int $port = 6379, string $key = 'vending_machine') {
+    public function __construct(string $host = 'redis', int $port = 6379, string $key = 'vending_machine', ?VendingMachine $default = null) {
         $this->redis = new Redis();
         $this->redis->connect($host, $port);
         $this->key = $key;
+        $this->default = $default ?? new VendingMachine([], []);
     }
 
-    public function load(VendingMachine $default): VendingMachine {
+    public function get(): VendingMachine {
         $data = $this->redis->get($this->key);
         if ($data !== false) {
             $object = unserialize($data);
@@ -25,7 +28,7 @@ class RedisVendingMachinePersistence {
                 return $object;
             }
         }
-        return $default;
+        return $this->default;
     }
 
     public function save(VendingMachine $machine): void {

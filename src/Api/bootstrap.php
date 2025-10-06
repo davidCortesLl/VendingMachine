@@ -4,8 +4,7 @@ use Domain\Model\VendingMachine;
 use Domain\Model\Item;
 use Domain\Model\Coin;
 use Domain\Repository\VendingMachineRepository;
-use Infrastructure\InMemoryVendingMachineRepository;
-use Infrastructure\RedisVendingMachinePersistence;
+use Infrastructure\RedisVendingMachineRepository;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
@@ -26,13 +25,6 @@ function getDefaultMachineState(): VendingMachine {
 
 function getVendingMachineRepository(): VendingMachineRepository {
     $defaultMachine = getDefaultMachineState();
-    $persistence = new RedisVendingMachinePersistence('redis', 6379, 'vending_machine');
-    $machine = $persistence->load($defaultMachine);
 
-    return new InMemoryVendingMachineRepository($machine);
+    return new RedisVendingMachineRepository('redis', 6379, 'vending_machine', $defaultMachine);
 }
-
-function getPersistence() {
-    return new RedisVendingMachinePersistence('redis', 6379, 'vending_machine');
-}
-
