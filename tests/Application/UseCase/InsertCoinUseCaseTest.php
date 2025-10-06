@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+namespace tests\Application\UseCase;
+
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Application\UseCase\InsertCoinUseCase;
 use Domain\Repository\VendingMachineRepository;
@@ -17,9 +20,17 @@ class InsertCoinUseCaseTest extends TestCase
         $repo->method('get')->willReturn($machine);
         $repo->expects($this->once())->method('save')->with($machine);
         $machine->expects($this->once())->method('insertCoin')->with(0.25);
+        $machine->method('jsonSerialize')->willReturn([
+            'coins' => ['0.25' => 1],
+            'insertedMoney' => 0.25
+        ]);
 
         $useCase = new InsertCoinUseCase($repo);
-        $useCase->execute(0.25);
+        $result = $useCase->execute(0.25);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('coins', $result);
+        $this->assertArrayHasKey('insertedMoney', $result);
+        $this->assertEquals(['coins' => ['0.25' => 1], 'insertedMoney' => 0.25], $result);
     }
 
     public function testInsertInvalidCoinThrows(): void
@@ -70,4 +81,3 @@ class InsertCoinUseCaseTest extends TestCase
         $useCase->execute(0.25);
     }
 }
-

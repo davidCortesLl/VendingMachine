@@ -21,7 +21,11 @@ class SelectItemUseCase {
             $result = $machine->selectItem($selector);
             $this->repository->save($machine);
 
-            return $result;
+            return [
+                'selected' => $result['item'] ?? null,
+                'returnedChange' => $result['change'] ?? [],
+                'status' => $machine->jsonSerialize()
+            ];
         } catch (\Exception $e) {
             throw new Exception($e->getMessage());
         }

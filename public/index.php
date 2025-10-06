@@ -2,6 +2,10 @@
 
 use Slim\Factory\AppFactory;
 use DI\Container;
+use Api\Controller\InsertCoinController;
+use Api\Controller\ReturnCoinsController;
+use Api\Controller\SelectItemController;
+use Api\Controller\ServiceSetMachineController;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -20,4 +24,3 @@ $app->post('/service/set-machine', ServiceSetMachineController::class);
 $app->addBodyParsingMiddleware();
 
 $app->run();
-

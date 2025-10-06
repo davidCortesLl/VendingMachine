@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Tests\Application\UseCase;
+
 use PHPUnit\Framework\TestCase;
 use Application\UseCase\SelectItemUseCase;
 use Domain\Repository\VendingMachineRepository;
@@ -27,8 +29,8 @@ class SelectItemUseCaseTest extends TestCase
         $useCase = new SelectItemUseCase($repo);
         $result = $useCase->execute('1');
 
-        $this->assertEquals('Water', $result['item']['name']);
-        $this->assertEquals([], $result['change']);
+        $this->assertEquals('Water', $result['selected']['name']);
+        $this->assertEquals([], $result['returnedChange']);
         $this->assertSame(1, $result['status']['items'][0]->count);
         $this->assertSame(0.0, $result['status']['insertedMoney']);
     }
@@ -46,8 +48,8 @@ class SelectItemUseCaseTest extends TestCase
         $useCase = new SelectItemUseCase($repo);
         $result = $useCase->execute('1');
 
-        $this->assertEquals('Juice', $result['item']['name']);
-        $this->assertNotEmpty($result['change']);
+        $this->assertEquals('Juice', $result['selected']['name']);
+        $this->assertNotEmpty($result['returnedChange']);
         $this->assertSame(1, $result['status']['items'][0]->count);
         $this->assertSame(0.0, $result['status']['insertedMoney']);
     }
@@ -82,5 +84,34 @@ class SelectItemUseCaseTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Cannot return exact change');
         $useCase->execute('1');
+    }
+
+    public function testSelectItemSuccess(): void
+    {
+        $repo = $this->createMock(VendingMachineRepository::class);
+        $machine = $this->createMock(VendingMachine::class);
+        $repo->method('get')->willReturn($machine);
+        $repo->expects($this->once())->method('save')->with($machine);
+        $machine->method('selectItem')->with('A1')->willReturn([
+            'item' => 'Coke',
+            'change' => [0.5]
+        ]);
+        $machine->method('jsonSerialize')->willReturn([
+            'coins' => [1.0],
+            'insertedMoney' => 0.0
+        ]);
+
+        $useCase = new SelectItemUseCase($repo);
+        $result = $useCase->execute('A1');
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('selected', $result);
+        $this->assertArrayHasKey('returnedChange', $result);
+        $this->assertArrayHasKey('status', $result);
+        $this->assertEquals('Coke', $result['selected']);
+        $this->assertEquals([0.5], $result['returnedChange']);
+        $this->assertEquals([
+            'coins' => [1.0],
+            'insertedMoney' => 0.0
+        ], $result['status']);
     }
 }

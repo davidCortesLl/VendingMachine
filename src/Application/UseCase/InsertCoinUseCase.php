@@ -16,7 +16,8 @@ class InsertCoinUseCase {
     /**
      * @throws Exception
      */
-    public function execute(float $value): void {
+    public function execute(float $value)
+    {
         $error = VendingMachine::validateCoinData($value, 1);
         if ($error !== null) {
             throw new \Exception($error);
@@ -26,7 +27,7 @@ class InsertCoinUseCase {
             $machine = $this->repository->get();
             $machine->insertCoin($value);
             $this->repository->save($machine);
-            return;
+            return $machine->jsonSerialize();
         }
         catch (\Exception $e) {
             throw new \Exception("Error inserting coin: " . $e->getMessage());

@@ -11,10 +11,10 @@ phpstan ::
 	docker-compose run --rm vending-machine vendor/bin/phpstan analyse
 
 test ::
-	docker-compose run --rm vending-machine vendor/bin/phpunit
+	docker-compose run --rm -e XDEBUG_MODE=off vending-machine vendor/bin/phpunit --no-coverage --display-deprecations --stderr
 
 coverage ::
 	docker-compose run --rm -e XDEBUG_MODE=coverage vending-machine vendor/bin/phpunit --configuration=phpunit.xml --coverage-text
 
 coverage-html ::
-	docker-compose run --rm -e XDEBUG_MODE=coverage -v %cd%/coverage:/app/coverage vending-machine vendor/bin/phpunit --configuration=phpunit.xml --coverage-html coverage/
+	docker-compose run --rm -e XDEBUG_MODE=coverage -v $(shell pwd)/coverage:/app/coverage vending-machine vendor/bin/phpunit --configuration=phpunit.xml --coverage-html coverage/

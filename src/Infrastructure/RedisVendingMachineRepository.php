@@ -13,9 +13,13 @@ class RedisVendingMachineRepository implements VendingMachineRepository {
     private string $key;
     private VendingMachine $default;
 
-    public function __construct(string $host = 'redis', int $port = 6379, string $key = 'vending_machine', ?VendingMachine $default = null) {
-        $this->redis = new Redis();
-        $this->redis->connect($host, $port);
+    public function __construct(string $host = 'redis', int $port = 6379, string $key = 'vending_machine', ?VendingMachine $default = null, ?Redis $redis = null) {
+        if ($redis !== null) {
+            $this->redis = $redis;
+        } else {
+            $this->redis = new Redis();
+            $this->redis->connect($host, $port);
+        }
         $this->key = $key;
         $this->default = $default ?? new VendingMachine([], []);
     }

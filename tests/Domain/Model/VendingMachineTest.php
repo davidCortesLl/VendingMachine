@@ -253,4 +253,26 @@ class VendingMachineTest extends TestCase
     {
         $this->assertSame("Coin value '0.5' is not allowed", VendingMachine::validateCoinData(0.50, 1));
     }
+
+    public function testJsonSerialize(): void
+    {
+        $items = [
+            $this->makeItem('A1', 'Water', 1.0, 2),
+            $this->makeItem('B2', 'Soda', 1.5, 1)
+        ];
+        $coins = ['0.25' => 3, '1.00' => 1];
+        $inserted = 2.0;
+        $vm = new VendingMachine($items, $coins, $inserted);
+
+        $expected = [
+            'items' => $items,
+            'coins' => $vm->coins, // usa el normalizado
+            'insertedMoney' => $inserted,
+        ];
+
+        $this->assertSame(
+            json_encode($expected),
+            json_encode($vm)
+        );
+    }
 }

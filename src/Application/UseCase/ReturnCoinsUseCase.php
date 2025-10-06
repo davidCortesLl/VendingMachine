@@ -20,10 +20,12 @@ class ReturnCoinsUseCase {
             $coins = $machine->returnInsertedCoins();
             $this->repository->save($machine);
 
-            return $coins;
+            return [
+                'returnedCoins' => $coins,
+                'status' => $machine->jsonSerialize()
+            ];
         } catch (\Exception $e) {
             throw new \Exception("Error returning coins: " . $e->getMessage());
         }
     }
 }
-

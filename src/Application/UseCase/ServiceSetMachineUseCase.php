@@ -17,7 +17,7 @@ class ServiceSetMachineUseCase {
     /**
      * @throws Exception
      */
-    public function execute(array $itemsData, array $coinsData): void {
+    public function execute(array $itemsData, array $coinsData): array {
         $items = [];
         foreach ($itemsData as $item) {
             $error = Item::validateItemData(
@@ -50,6 +50,8 @@ class ServiceSetMachineUseCase {
         $machine->items = $items;
         $machine->coins = $coins;
         $this->repository->save($machine);
+
+        return $machine->jsonSerialize();
     }
 
 }

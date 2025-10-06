@@ -7,12 +7,11 @@ namespace Api\Controller;
 use Application\UseCase\ServiceSetMachineUseCase;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Domain\Repository\VendingMachineRepository;
 
 class ServiceSetMachineController
 {
     public function __construct(
-        private VendingMachineRepository $repository
+        private ServiceSetMachineUseCase $useCase
     ) {}
 
     public function __invoke(Request $request, Response $response, array $args): Response
@@ -26,14 +25,13 @@ class ServiceSetMachineController
 
         $items = $input['items'];
         $coins = $input['coins'];
-        $useCase = new ServiceSetMachineUseCase($this->repository);
         try {
-            $useCase->execute($items, $coins);
+            $status = $this->useCase->execute($items, $coins);
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
             return $response->withStatus(422)->withHeader('Content-Type', 'application/json');
         }
-        $response->getBody()->write(json_encode(['status' => $this->repository->get()]));
+        $response->getBody()->write(json_encode(['status' => $status]));
 
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     }
@@ -57,6 +55,15 @@ class ServiceSetMachineController
             if (!is_string($item['selector']) || !is_string($item['name']) || !is_numeric($item['price']) || !is_int($item['count'])) {
                 return "Item in position $i has invalid types";
             }
+            if (trim($item['selector']) === '' || trim($item['name']) === '') {
+                return "Item in position $i: selector and name cannot be empty";
+            }
+            if ($item['price'] < 0) {
+                return "Item in position $i: price must be >= 0";
+            }
+            if ($item['count'] < 0) {
+                return "Item in position $i: count must be >= 0";
+            }
         }
 
         foreach ($coins as $i => $coin) {
@@ -66,9 +73,14 @@ class ServiceSetMachineController
             if (!is_numeric($coin['value']) || !is_int($coin['count'])) {
                 return "Coin in position $i has invalid types";
             }
+            if ($coin['value'] <= 0) {
+                return "Coin in position $i: value must be > 0";
+            }
+            if ($coin['count'] < 0) {
+                return "Coin in position $i: count must be >= 0";
+            }
         }
 
         return null;
     }
 }
-

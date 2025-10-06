@@ -2,29 +2,36 @@
 
 declare(strict_types=1);
 
+namespace Tests\Application\UseCase;
+
 use PHPUnit\Framework\TestCase;
+use Exception;
 use Application\UseCase\ServiceSetMachineUseCase;
 use Domain\Repository\VendingMachineRepository;
+use Domain\Model\VendingMachine;
 
 class ServiceSetMachineUseCaseTest extends TestCase
 {
     public function testSetMachineSuccess(): void
     {
         $repo = $this->createMock(VendingMachineRepository::class);
-        $repo->expects($this->once())->method('save');
+        $machine = $this->createMock(VendingMachine::class);
+        $repo->method('get')->willReturn($machine);
+        $repo->expects($this->once())->method('save')->with($machine);
+        $machine->method('jsonSerialize')->willReturn([
+            'coins' => [1.0],
+            'insertedMoney' => 0.0
+        ]);
 
-        $items = [
-            ['selector' => '1', 'name' => 'Water', 'price' => 1.0, 'count' => 5],
-            ['selector' => '2', 'name' => 'Juice', 'price' => 1.5, 'count' => 3],
-        ];
-        $coins = [
-            ['value' => 0.25, 'count' => 10],
-            ['value' => 1.0, 'count' => 5],
-        ];
         $useCase = new ServiceSetMachineUseCase($repo);
-        $useCase->execute($items, $coins);
-
-        $this->assertTrue(true);
+        $result = $useCase->execute([], []);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('coins', $result);
+        $this->assertArrayHasKey('insertedMoney', $result);
+        $this->assertEquals([
+            'coins' => [1.0],
+            'insertedMoney' => 0.0
+        ], $result);
     }
 
     public function testSetMachineInvalidItemThrows(): void
@@ -87,4 +94,3 @@ class ServiceSetMachineUseCaseTest extends TestCase
         $this->assertTrue(true);
     }
 }
-

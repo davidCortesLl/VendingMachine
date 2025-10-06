@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Model;
 
-class VendingMachine {
+class VendingMachine implements \JsonSerializable {
     public const VALID_COIN_VALUES = [0.05, 0.10, 0.25, 1.00];
 
     /** @var Item[] */
@@ -150,6 +150,14 @@ class VendingMachine {
             return "Coin value '$floatValue' is not allowed";
         }
         return null;
+    }
+
+    public function jsonSerialize(): array {
+        return [
+            'items' => $this->items,
+            'coins' => $this->coins,
+            'insertedMoney' => $this->insertedMoney,
+        ];
     }
 
 }
