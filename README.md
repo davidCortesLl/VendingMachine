@@ -2,7 +2,7 @@
 
 ## Description
 
-This API simulates the operation of a vending machine. It allows you to insert coins, select products, return inserted money, and configure the inventory and available coins. Persistence can be in-memory or Redis, and it is ready to be easily run in a Docker environment.
+This API simulates the operation of a vending machine. It allows you to insert coins, select products, return inserted money, and configure the inventory and available coins. Persistence between calls is managed by Redis, and it is ready to be easily run in a Docker environment.
 
 ## Requirements
 
@@ -104,3 +104,7 @@ This API simulates the operation of a vending machine. It allows you to insert c
    ```
 
 The API will be available on the port configured in `docker-compose.yml` (by default, usually 80 or 8080). You can test the endpoints using tools like Postman or curl.
+
+## Considerations
+- The persistence infra is not robust against concurrency, simultaneous requests may lead to inconsistent states. This would be solved with a more robust database or locking mechanism.
+- The API does not include authentication or authorization mechanisms. In a production environment, these features would be added to secure the endpoints.

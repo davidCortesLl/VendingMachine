@@ -7,15 +7,11 @@
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
-    <coverage>
+    <source>
         <include>
             <directory suffix=".php">./src</directory>
         </include>
-        <report>
-            <clover outputFile="coverage/clover.xml"/>
-            <html outputDirectory="coverage"/>
-        </report>
-    </coverage>
+    </source>
     <php>
         <ini name="error_reporting" value="E_ALL"/>
         <ini name="display_errors" value="1"/>

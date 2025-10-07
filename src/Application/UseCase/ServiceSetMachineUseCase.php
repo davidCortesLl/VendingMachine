@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Application\UseCase;
 
-use Domain\Model\VendingMachine;
 use Domain\Repository\VendingMachineRepository;
-use Domain\Model\Item;
 use Exception;
 
 class ServiceSetMachineUseCase {
@@ -18,40 +16,14 @@ class ServiceSetMachineUseCase {
      * @throws Exception
      */
     public function execute(array $itemsData, array $coinsData): array {
-        $items = [];
-        foreach ($itemsData as $item) {
-            $error = Item::validateItemData(
-                $item['name'],
-                (float)$item['price'],
-                (int)$item['count']
-            );
-            if ($error !== null) {
-                throw new Exception($error);
-            }
+        try {
+            $machine = $this->repository->get();
+            $machine->serviceSetMachine($itemsData, $coinsData);
+            $this->repository->save($machine);
 
-            $items[] = new Item(
-                $item['selector'],
-                $item['name'],
-                (float)$item['price'],
-                (int)$item['count']
-            );
+            return $machine->jsonSerialize();
+        } catch (\Exception $e) {
+            throw new Exception("Error setting machine configuration: " . $e->getMessage());
         }
-
-        $coins = [];
-        foreach ($coinsData as $coin) {
-            $error = VendingMachine::validateCoinData((float)$coin['value'], (int)$coin['count']);
-            if ($error !== null) {
-                throw new Exception($error);
-            }
-            $coins[(string)$coin['value']] = (int)$coin['count'];
-        }
-
-        $machine = $this->repository->get();
-        $machine->items = $items;
-        $machine->coins = $coins;
-        $this->repository->save($machine);
-
-        return $machine->jsonSerialize();
     }
-
 }

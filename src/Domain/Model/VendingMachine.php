@@ -133,6 +133,44 @@ class VendingMachine implements \JsonSerializable {
         ];
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function serviceSetMachine(array $itemsData, array $coinsData): void {
+        $items = [];
+        foreach ($itemsData as $itemData) {
+            $error = Item::validateItemData(
+                $itemData['name'],
+                (float)$itemData['price'],
+                (int)$itemData['count']
+            );
+            if ($error !== null) {
+                throw new \Exception($error);
+            }
+
+            $items[] = new Item(
+                $itemData['selector'],
+                $itemData['name'],
+                (float)$itemData['price'],
+                (int)$itemData['count']
+            );
+        }
+
+        $coins = [];
+        foreach ($coinsData as $coinData) {
+            $error = self::validateCoinData((float)$coinData['value'], (int)$coinData['count']);
+            if ($error !== null) {
+                throw new \Exception($error);
+            }
+            $coinKey = number_format((float)$coinData['value'], 2, '.', '');
+            $coins[$coinKey] = (int)$coinData['count'];
+        }
+
+        $this->items = $items;
+        $this->coins = $coins;
+        $this->insertedMoney = 0.0;
+    }
+
     public static function isValidCoinValue(float|string $value): bool {
         $floatValue = (float)$value;
         return in_array($floatValue, self::VALID_COIN_VALUES, true);

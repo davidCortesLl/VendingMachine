@@ -254,6 +254,159 @@ class VendingMachineTest extends TestCase
         $this->assertSame("Coin value '0.5' is not allowed", VendingMachine::validateCoinData(0.50, 1));
     }
 
+    public function testServiceSetMachineSuccess(): void
+    {
+        $vm = new VendingMachine([], [], 1.0);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 0.65, 'count' => 5],
+            ['selector' => 'B1', 'name' => 'Juice', 'price' => 1.00, 'count' => 3]
+        ];
+
+        $coinsData = [
+            ['value' => 0.25, 'count' => 10],
+            ['value' => 1.00, 'count' => 5]
+        ];
+
+        $vm->serviceSetMachine($itemsData, $coinsData);
+
+        $this->assertCount(2, $vm->items);
+        $this->assertEquals('Water', $vm->items[0]->name);
+        $this->assertEquals('Juice', $vm->items[1]->name);
+        $this->assertEquals(['0.25' => 10, '1.00' => 5], $vm->coins);
+        $this->assertEquals(0.0, $vm->insertedMoney);
+    }
+
+    public function testServiceSetMachineEmptyArrays(): void
+    {
+        $vm = new VendingMachine([
+            $this->makeItem('A1', 'Water', 1.0, 1)
+        ], ['0.25' => 5], 2.0);
+
+        $vm->serviceSetMachine([], []);
+
+        $this->assertCount(0, $vm->items);
+        $this->assertCount(0, $vm->coins);
+        $this->assertEquals(0.0, $vm->insertedMoney);
+    }
+
+    public function testServiceSetMachineInvalidItemName(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => '', 'price' => 1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => 0.25, 'count' => 10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineInvalidItemPrice(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => -1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => 0.25, 'count' => 10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineInvalidItemCount(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 1.0, 'count' => -1]
+        ];
+
+        $coinsData = [
+            ['value' => 0.25, 'count' => 10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineInvalidCoinValue(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => 0.50, 'count' => 10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineNegativeCoinValue(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => -0.25, 'count' => 10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineNegativeCoinCount(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => 0.25, 'count' => -10]
+        ];
+
+        $this->expectException(\Exception::class);
+        $vm->serviceSetMachine($itemsData, $coinsData);
+    }
+
+    public function testServiceSetMachineCoinKeyNormalization(): void
+    {
+        $vm = new VendingMachine([], []);
+
+        $itemsData = [
+            ['selector' => 'A1', 'name' => 'Water', 'price' => 1.0, 'count' => 5]
+        ];
+
+        $coinsData = [
+            ['value' => 0.1, 'count' => 10],
+            ['value' => 1, 'count' => 5]
+        ];
+
+        $vm->serviceSetMachine($itemsData, $coinsData);
+
+        $this->assertArrayHasKey('0.10', $vm->coins);
+        $this->assertArrayHasKey('1.00', $vm->coins);
+        $this->assertEquals(10, $vm->coins['0.10']);
+        $this->assertEquals(5, $vm->coins['1.00']);
+    }
+
     public function testJsonSerialize(): void
     {
         $items = [
@@ -266,7 +419,7 @@ class VendingMachineTest extends TestCase
 
         $expected = [
             'items' => $items,
-            'coins' => $vm->coins, // usa el normalizado
+            'coins' => $vm->coins,
             'insertedMoney' => $inserted,
         ];
 
